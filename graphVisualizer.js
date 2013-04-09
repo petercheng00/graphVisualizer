@@ -15,8 +15,15 @@ function mainLoop() {
 
     var edges = [];
 
+    var nodeColor = 'green';
+    var nodeHighlightColor = 'blue';
+    var nodeBorderColor = '#003300'
+
+    var edgeColor = 'black';
+
+    var weightColor = 'blue';
+
     function init () {
-        console.log("init");
         // Find the canvas element.
         canvaso = document.getElementById('imageView');
         if (!canvaso) {
@@ -136,7 +143,6 @@ function mainLoop() {
             }
             if (canDraw)
             {
-                console.log("adding node " + nodes.length);
                 drawNode(ev._x, ev._y);
                 nodes.push({x: ev._x, y: ev._y});
                 img_update();
@@ -160,9 +166,8 @@ function mainLoop() {
             {
                 if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < node_radius)
                 {
-                    console.log("started edge on " + i);
                     this.startNode = i;
-                    drawNode(nodes[i].x, nodes[i].y, 'blue');
+                    drawNode(nodes[i].x, nodes[i].y, nodeHighlightColor);
                     return;
                 }
             }
@@ -180,7 +185,6 @@ function mainLoop() {
                 {
                     if (i != this.startNode)
                     {
-                        console.log("moused over node " + i);
                         drawNode(nodes[i].x, nodes[i].y, 'blue');
                         this.endNode = i;
                     }
@@ -205,7 +209,8 @@ function mainLoop() {
             }
             if (!edgeExists(this.startNode, this.endNode))
             {
-                drawEdge(this.startNode, this.endNode);
+                weight = 100;
+                drawEdge(this.startNode, this.endNode, weight);
                 img_update();
                 edges.push({n1: this.startNode, n2: this.endNode});
             }
@@ -242,8 +247,8 @@ function mainLoop() {
 
     function drawNode(x, y, color1, color2)
     {
-        color1 = typeof color1 !== 'undefined' ? color1 : 'green';
-        color2 = typeof color2 !== 'undefined' ? color2 : '#003300';
+        color1 = typeof color1 !== 'undefined' ? color1 : nodeColor;
+        color2 = typeof color2 !== 'undefined' ? color2 : nodeBorderColor;
         context.beginPath();
         context.arc(x, y, node_radius, 0, 2 * Math.PI, false);
         context.fillStyle = color1;
@@ -253,12 +258,33 @@ function mainLoop() {
         context.stroke();
     }
 
-    function drawEdge(i1, i2)
+    function drawEdge(i1, i2, weight)
     {
+        var x1 = nodes[i1].x;
+        var y1 = nodes[i1].y;
+        var x2 = nodes[i2].x;
+        var y2 = nodes[i2].y;
+        context.strokeStyle = edgeColor;
         context.beginPath();
-        context.moveTo(nodes[i1].x, nodes[i1].y);
-        context.lineTo(nodes[i2].x, nodes[i2].y);
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
         context.stroke();
+        context.closePath();
+
+        context.textAlign='center'
+        context.font="15px Arial";
+
+        context.beginPath();
+        context.strokeStyle = 'white';
+        context.lineWidth = 5;
+        context.strokeText(weight,(x1+x2)/2,(y1+y2)/2);
+        context.stroke();
+        context.closePath();
+
+        context.beginPath();
+        context.fillStyle = weightColor;
+        context.fillText(weight,(x1+x2)/2,(y1+y2)/2);
+        context.fill();
         context.closePath();
     }
 
