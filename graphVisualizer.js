@@ -8,7 +8,7 @@ function mainLoop() {
 
     // The active tool instance.
     var tool;
-    var tool_default = 'line';
+    var tool_default = 'node';
 
     var nodes = [];
     var node_radius = 20;
@@ -16,6 +16,7 @@ function mainLoop() {
     var edges = [];
 
     function init () {
+        console.log("init");
         // Find the canvas element.
         canvaso = document.getElementById('imageView');
         if (!canvaso) {
@@ -49,6 +50,9 @@ function mainLoop() {
         container.appendChild(canvas);
 
         context = canvas.getContext('2d');
+
+        var clear_button = document.getElementById("clear_button");
+        clear_button.onclick = function() {clearCanvas()};
 
         var tool_radios = document.toolForm.toolRadios;
         for (var i = 0; i < tool_radios.length; ++i)
@@ -114,112 +118,6 @@ function mainLoop() {
     // This object holds the implementation of each drawing tool.
     var tools = {};
 
-    // The drawing pencil.
-    tools.pencil = function () {
-        var tool = this;
-        this.started = false;
-
-        // This is called when you start holding down the mouse button.
-        // This starts the pencil drawing.
-        this.mousedown = function (ev) {
-            context.beginPath();
-            context.moveTo(ev._x, ev._y);
-            tool.started = true;
-        };
-
-        // This function is called every time you move the mouse. Obviously, it only
-        // draws if the tool.started state is set to true (when you are holding down
-        // the mouse button).
-        this.mousemove = function (ev) {
-            if (tool.started) {
-                context.lineTo(ev._x, ev._y);
-                context.stroke();
-            }
-        };
-
-        // This is called when you release the mouse button.
-        this.mouseup = function (ev) {
-            if (tool.started) {
-                tool.mousemove(ev);
-                tool.started = false;
-                img_update();
-            }
-        };
-    };
-
-    // The rectangle tool.
-    tools.rect = function () {
-        var tool = this;
-        this.started = false;
-
-        this.mousedown = function (ev) {
-            tool.started = true;
-            tool.x0 = ev._x;
-            tool.y0 = ev._y;
-        };
-
-        this.mousemove = function (ev) {
-            if (!tool.started) {
-                return;
-            }
-
-            var x = Math.min(ev._x,  tool.x0),
-                y = Math.min(ev._y,  tool.y0),
-                w = Math.abs(ev._x - tool.x0),
-                h = Math.abs(ev._y - tool.y0);
-
-            context.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (!w || !h) {
-                return;
-            }
-
-            context.strokeRect(x, y, w, h);
-        };
-
-        this.mouseup = function (ev) {
-            if (tool.started) {
-                tool.mousemove(ev);
-                tool.started = false;
-                img_update();
-            }
-        };
-    };
-
-    // The line tool.
-    tools.line = function () {
-        var tool = this;
-        this.started = false;
-
-        this.mousedown = function (ev) {
-            tool.started = true;
-            tool.x0 = ev._x;
-            tool.y0 = ev._y;
-        };
-
-        this.mousemove = function (ev) {
-            if (!tool.started) {
-                return;
-            }
-
-            context.clearRect(0, 0, canvas.width, canvas.height);
-
-            context.beginPath();
-            context.moveTo(tool.x0, tool.y0);
-            context.lineTo(ev._x,   ev._y);
-            context.stroke();
-            context.closePath();
-        };
-
-        this.mouseup = function (ev) {
-            if (tool.started) {
-                tool.mousemove(ev);
-                tool.started = false;
-                img_update();
-            }
-        };
-    };
-
     // The node tool.
     tools.node = function () {
         this.mousedown = function (ev) {
@@ -234,6 +132,7 @@ function mainLoop() {
             }
             if (canDraw)
             {
+                console.log("adding node " + nodes.length);
                 drawNode(ev._x, ev._y);
                 nodes.push({x: ev._x, y: ev._y});
                 img_update();
@@ -257,6 +156,7 @@ function mainLoop() {
             {
                 if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < node_radius)
                 {
+                    console.log("started edge on " + i);
                     this.startNode = i;
                     drawNode(nodes[i].x, nodes[i].y, 'blue');
                     return;
@@ -276,6 +176,7 @@ function mainLoop() {
                 {
                     if (i != this.startNode)
                     {
+                        console.log("moused over node " + i);
                         drawNode(nodes[i].x, nodes[i].y, 'blue');
                         this.endNode = i;
                     }
@@ -300,11 +201,7 @@ function mainLoop() {
             }
             if (!edgeExists(this.startNode, this.endNode))
             {
-                context.beginPath();
-                context.moveTo(nodes[this.startNode].x, nodes[this.startNode].y);
-                context.lineTo(nodes[this.endNode].x, nodes[this.endNode].y);
-                context.stroke();
-                context.closePath();
+                drawEdge(this.startNode, this.endNode);
                 img_update();
                 edges.push({n1: this.startNode, n2: this.endNode});
             }
@@ -313,6 +210,31 @@ function mainLoop() {
         };
     };
 
+
+    function clearTempCanvas()
+    {
+	context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    function clearCanvas()
+    {
+	contexto.clearRect(0, 0, canvaso.width, canvaso.height);
+    }
+
+    function drawNodes()
+    {
+        for (var i = 0; i < nodes.length; ++i)
+        {
+            drawNode(nodes[i].x, nodes[i].yy);
+        }
+    }
+
+    function drawEdges()
+    {
+        for (var i = 0; i < edges.length; ++i)
+        {
+            drawEdge(edges[i].n1, edges[i].n2);
+        }
+    }
 
     function drawNode(x, y, color1, color2)
     {
@@ -325,6 +247,15 @@ function mainLoop() {
         context.lineWidth = 4;
         context.strokeStyle = color2;
         context.stroke();
+    }
+
+    function drawEdge(i1, i2)
+    {
+        context.beginPath();
+        context.moveTo(nodes[i1].x, nodes[i1].y);
+        context.lineTo(nodes[i2].x, nodes[i2].y);
+        context.stroke();
+        context.closePath();
     }
 
     function edgeExists(in1, in2)
