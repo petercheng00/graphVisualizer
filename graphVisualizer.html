@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Graph Visualizer</title>
+    <style type="text/css"><!--
+      #container { position: relative; }
+      #imageView { border: 1px solid #000; }
+      #imageTemp { position: absolute; top: 1px; left: 1px; }
+    --></style>
+  </head>
+  <body>
+    <p>
+      <form name="toolForm">
+	<input type="radio" name="toolRadios" value="line"> Line <br>
+	<input type="radio" name="toolRadios" value="rect"> Rect <br>
+	<input type="radio" name="toolRadios" value="pencil"> Pencil <br>
+	<input type="radio" name="toolRadios" value="node"> Node <br>
+      </form>
+    </p>
+
+    <div id="container">
+      <canvas id="imageView" width="600" height="500">
+        <p>Unfortunately, your browser is currently unsupported by our web 
+        application. Please try another browser, such as Chrome or Firefox instead. </p>
+      </canvas>
+    </div>
+
+    <script type="text/javascript" 
+    src="graphVisualizer.js"></script>
+  </body>
+</html>
