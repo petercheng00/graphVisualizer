@@ -52,7 +52,11 @@ function mainLoop() {
         context = canvas.getContext('2d');
 
         var clear_button = document.getElementById("clear_button");
-        clear_button.onclick = function() {clearCanvas()};
+        clear_button.onclick = function() {
+            clearCanvas();
+            nodes = [];
+            edges = [];
+        }
 
         var tool_radios = document.toolForm.toolRadios;
         for (var i = 0; i < tool_radios.length; ++i)
