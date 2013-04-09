@@ -13,6 +13,8 @@ function mainLoop() {
     var nodes = [];
     var node_radius = 20;
 
+    var edges = [];
+
     function init () {
         // Find the canvas element.
         canvaso = document.getElementById('imageView');
@@ -220,7 +222,6 @@ function mainLoop() {
 
     // The node tool.
     tools.node = function () {
-        var tool = this;
         this.mousedown = function (ev) {
             var canDraw = true;
             for (var i = 0; i < nodes.length; ++i)
@@ -233,14 +234,9 @@ function mainLoop() {
             }
             if (canDraw)
             {
-                context.beginPath();
-                context.arc(ev._x, ev._y, node_radius, 0, 2 * Math.PI, false);
-                context.fillStyle = 'green';
-                context.fill();
-                context.lineWidth = 4;
-                context.strokeStyle = '#003300';
-                context.stroke();
+                drawNode(ev._x, ev._y);
                 nodes.push({x: ev._x, y: ev._y});
+                img_update();
             }
         };
 
@@ -250,6 +246,99 @@ function mainLoop() {
         this.mouseup = function (ev) {
         };
     };
+
+
+    // The line tool.
+    tools.edge = function () {
+        this.startNode = null;
+        this.endNode = null;
+        this.mousedown = function (ev) {
+            for (var i = 0; i < nodes.length; ++i)
+            {
+                if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < node_radius)
+                {
+                    this.startNode = i;
+                    drawNode(nodes[i].x, nodes[i].y, 'blue');
+                    return;
+                }
+            }
+        };
+
+        this.mousemove = function (ev) {
+            if (this.startNode == null) {
+                return;
+            }
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            drawNode(nodes[this.startNode].x, nodes[this.startNode].y, 'blue')
+            for (var i = 0; i < nodes.length; ++i)
+            {
+                if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < 2 * node_radius)
+                {
+                    if (i != this.startNode)
+                    {
+                        drawNode(nodes[i].x, nodes[i].y, 'blue');
+                        this.endNode = i;
+                    }
+                    break;
+                }
+            }
+
+            context.beginPath();
+            context.moveTo(nodes[this.startNode].x, nodes[this.startNode].y);
+            context.lineTo(ev._x, ev._y);
+            context.stroke();
+            context.closePath();
+        };
+
+        this.mouseup = function (ev) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            if (this.startNode == null || this.endNode == null)
+            {
+                this.startNode = null;
+                this.endNode = null;
+                return;
+            }
+            if (!edgeExists(this.startNode, this.endNode))
+            {
+                context.beginPath();
+                context.moveTo(nodes[this.startNode].x, nodes[this.startNode].y);
+                context.lineTo(nodes[this.endNode].x, nodes[this.endNode].y);
+                context.stroke();
+                context.closePath();
+                img_update();
+                edges.push({n1: this.startNode, n2: this.endNode});
+            }
+            this.startNode = null;
+            this.endNode = null;
+        };
+    };
+
+
+    function drawNode(x, y, color1, color2)
+    {
+        color1 = typeof color1 !== 'undefined' ? color1 : 'green';
+        color2 = typeof color2 !== 'undefined' ? color2 : '#003300';
+        context.beginPath();
+        context.arc(x, y, node_radius, 0, 2 * Math.PI, false);
+        context.fillStyle = color1;
+        context.fill();
+        context.lineWidth = 4;
+        context.strokeStyle = color2;
+        context.stroke();
+    }
+
+    function edgeExists(in1, in2)
+    {
+        for (var i = 0; i < edges.length; ++i)
+        {
+            if ((edges[i].n1 == in1 && edges[i].n2 == in2) || (edges[i].n1 == in2 && edges[i].n2 == in1))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     init();
 }
 

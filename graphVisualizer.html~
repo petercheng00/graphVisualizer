@@ -11,13 +11,9 @@
   </head>
   <body>
     <p>
-      <form name="toolForm">
-	<input type="radio" name="toolRadios" value="line"> Line <br>
-	<input type="radio" name="toolRadios" value="rect"> Rect <br>
-	<input type="radio" name="toolRadios" value="pencil"> Pencil <br>
-	<input type="radio" name="toolRadios" value="node"> Node <br>
-	<input type="radio" name="toolRadios" value="edge"> Edge <br>
-      </form>
+      <input type="radio" name="toolRadio" value="line"> Line <br>
+      <input type="radio" name="toolRadio" value="rect"> Rect <br>
+      <input type="radio" name="toolRadio" value="pencil"> Pencil <br>
     </p>
 
     <div id="container">
