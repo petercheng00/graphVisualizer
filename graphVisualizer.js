@@ -209,10 +209,14 @@ function mainLoop() {
             }
             if (!edgeExists(this.startNode, this.endNode))
             {
-                weight = 100;
+                var weight = parseFloat(prompt("Edge Weight",0));
+                while (isNaN(weight))
+                {
+                    weight = parseFloat(prompt("Please enter a valid float value", 0));
+                }
                 drawEdge(this.startNode, this.endNode, weight);
                 img_update();
-                edges.push({n1: this.startNode, n2: this.endNode});
+                edges.push({n1: this.startNode, n2: this.endNode, w: weight});
             }
             this.startNode = null;
             this.endNode = null;
@@ -307,7 +311,7 @@ function mainLoop() {
 
         context.beginPath();
         context.strokeStyle = 'white';
-        context.lineWidth = 5;
+        context.lineWidth = 7;
         context.strokeText(weight,(x1+x2)/2,(y1+y2)/2);
         context.stroke();
         context.closePath();
