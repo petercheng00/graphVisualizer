@@ -107,6 +107,7 @@ function mainLoop() {
         // Call the event handler of the tool.
         var func = tool[ev.type];
         if (func) {
+            clearTempCanvas();
             func(ev);
         }
     }
@@ -141,7 +142,6 @@ function mainLoop() {
         };
 
         this.mousemove = function (ev) {
-            clearTempCanvas();
             if (canDrawNode(ev._x, ev._y))
             {
                 drawNode(ev._x, ev._y, '#00ee00', '#00dd00');
@@ -157,7 +157,7 @@ function mainLoop() {
     };
 
 
-    // The line tool.
+    // The edge tool.
     tools.edge = function () {
         this.startNode = null;
         this.endNode = null;
@@ -174,7 +174,7 @@ function mainLoop() {
         };
 
         this.mousemove = function (ev) {
-            clearTempCanvas();
+            this.endNode = null;
             if (this.startNode == null) {
                 return;
             }
@@ -191,7 +191,6 @@ function mainLoop() {
                     break;
                 }
             }
-
             context.beginPath();
             context.moveTo(nodes[this.startNode].x, nodes[this.startNode].y);
             context.lineTo(ev._x, ev._y);
@@ -222,6 +221,72 @@ function mainLoop() {
             this.endNode = null;
         };
     };
+
+
+
+
+    // The eraser tool.
+    tools.eraser = function () {
+        this.mousedown = function (ev) {
+            for (var i = 0; i < nodes.length; ++i)
+            {
+                if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < node_radius)
+                {
+                    removeNode(i);
+                    clearCanvas();
+                    drawNodes();
+                    drawEdges();
+                    img_update();
+                    return;
+                }
+            }
+            for (var i = 0; i < edges.length; ++i)
+            {
+                if (distToSegment({x: ev._x, y:ev._y}, nodes[edges[i].n1], nodes[edges[i].n2]) < node_radius)
+                {
+                    edges.splice(i,1);
+                    clearCanvas();
+                    drawNodes();
+                    drawEdges();
+                    img_update();
+                    return;
+                }
+            }
+        };
+
+        this.mousemove = function (ev) {
+            for (var i = 0; i < nodes.length; ++i)
+            {
+                if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < node_radius)
+                {
+                    drawNode(nodes[i].x, nodes[i].y, '#aa0000', '#440000');
+                    return;
+                }
+            }
+            for (var i = 0; i < edges.length; ++i)
+            {
+                if (distToSegment({x: ev._x, y:ev._y}, nodes[edges[i].n1], nodes[edges[i].n2]) < node_radius)
+                {
+                    drawEdge(edges[i].n1, edges[i].n2, edges[i].w, 'red');
+                    return;
+                }
+            }
+        };
+
+        this.mouseup = function (ev) {
+        };
+    };
+
+
+
+
+
+
+
+
+
+
+
 
 
     function clearTempCanvas()
@@ -260,7 +325,7 @@ function mainLoop() {
     {
         for (var i = 0; i < edges.length; ++i)
         {
-            drawEdge(edges[i].n1, edges[i].n2);
+            drawEdge(edges[i].n1, edges[i].n2, edges[i].w);
         }
     }
 
@@ -293,13 +358,15 @@ function mainLoop() {
         context.closePath();
     }
 
-    function drawEdge(i1, i2, weight)
+    function drawEdge(i1, i2, weight, color)
     {
+        color = typeof color !== 'undefined' ? color : edgeColor;
         var x1 = nodes[i1].x;
         var y1 = nodes[i1].y;
         var x2 = nodes[i2].x;
         var y2 = nodes[i2].y;
-        context.strokeStyle = edgeColor;
+        context.strokeStyle = color;
+        context.lineWidth = 5;
         context.beginPath();
         context.moveTo(x1, y1);
         context.lineTo(x2, y2);
@@ -335,6 +402,30 @@ function mainLoop() {
         return false;
     }
 
+    function removeNode(i)
+    {
+        nodes.splice(i, 1);
+        for (var j = edges.length-1; j >= 0; --j)
+        {
+            if (edges[j].n1 == i || edges[j].n2 == i)
+            {
+                edges.splice(j,1);
+            }
+            else
+            {
+                if (edges[j].n1 > i)
+                {
+                    --edges[j].n1;
+                }
+                if (edges[j].n2 > i)
+                {
+                    --edges[j].n2;
+                }
+            }
+        }
+        return;
+    }
+
     init();
 }
 
@@ -352,3 +443,16 @@ function lineDistance( x1, y1, x2, y2 )
 
   return Math.sqrt( xs + ys );
 }
+
+function sqr(x) { return x * x }
+function dist2(v, w) { return sqr(v.x - w.x) + sqr(v.y - w.y) }
+function distToSegmentSquared(p, v, w) {
+  var l2 = dist2(v, w);
+  if (l2 == 0) return dist2(p, v);
+  var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+  if (t < 0) return dist2(p, v);
+  if (t > 1) return dist2(p, w);
+  return dist2(p, { x: v.x + t * (w.x - v.x),
+                    y: v.y + t * (w.y - v.y) });
+}
+function distToSegment(p, v, w) { return Math.sqrt(distToSegmentSquared(p, v, w)); }
