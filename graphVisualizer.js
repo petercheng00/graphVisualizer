@@ -132,16 +132,7 @@ function mainLoop() {
     // The node tool.
     tools.node = function () {
         this.mousedown = function (ev) {
-            var canDraw = true;
-            for (var i = 0; i < nodes.length; ++i)
-            {
-                if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < 2 * node_radius)
-                {
-                    canDraw = false;
-                    break;
-                }
-            }
-            if (canDraw)
+            if (canDrawNode(ev._x, ev._y))
             {
                 drawNode(ev._x, ev._y);
                 nodes.push({x: ev._x, y: ev._y});
@@ -150,6 +141,15 @@ function mainLoop() {
         };
 
         this.mousemove = function (ev) {
+            clearTempCanvas();
+            if (canDrawNode(ev._x, ev._y))
+            {
+                drawNode(ev._x, ev._y, '#00ee00', '#00dd00');
+            }
+            else
+            {
+                drawX(ev._x, ev._y);
+            }
         };
 
         this.mouseup = function (ev) {
@@ -174,11 +174,11 @@ function mainLoop() {
         };
 
         this.mousemove = function (ev) {
+            clearTempCanvas();
             if (this.startNode == null) {
                 return;
             }
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            drawNode(nodes[this.startNode].x, nodes[this.startNode].y, 'blue')
+            drawNode(nodes[this.startNode].x, nodes[this.startNode].y, 'blue');
             for (var i = 0; i < nodes.length; ++i)
             {
                 if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < 2 * node_radius)
@@ -229,11 +229,26 @@ function mainLoop() {
 	contexto.clearRect(0, 0, canvaso.width, canvaso.height);
     }
 
+    function canDrawNode(x, y)
+    {
+        for (var i = 0; i < nodes.length; ++i)
+        {
+            if (lineDistance(x, y, nodes[i].x, nodes[i].y) < 2.5 * node_radius)
+            {
+                return false;
+            }
+        }
+        if (x < node_radius || x > canvas.width - node_radius || y < node_radius || y > canvas.height - node_radius)
+        {
+            return false;
+        }
+        return true;
+    }
     function drawNodes()
     {
         for (var i = 0; i < nodes.length; ++i)
         {
-            drawNode(nodes[i].x, nodes[i].yy);
+            drawNode(nodes[i].x, nodes[i].y);
         }
     }
 
@@ -256,6 +271,22 @@ function mainLoop() {
         context.lineWidth = 4;
         context.strokeStyle = color2;
         context.stroke();
+    }
+
+    function drawX(x, y)
+    {
+        context.strokeStyle = 'red';
+        context.beginPath();
+        var xLen = 0.8 * node_radius;
+        context.moveTo(x-xLen, y-xLen);
+        context.lineTo(x+xLen, y+xLen);
+        context.stroke();
+        context.closePath();
+        context.beginPath();
+        context.moveTo(x+xLen, y-xLen);
+        context.lineTo(x-xLen, y+xLen);
+        context.stroke();
+        context.closePath();
     }
 
     function drawEdge(i1, i2, weight)
