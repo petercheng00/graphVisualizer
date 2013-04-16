@@ -1,13 +1,18 @@
 var graphLogic = (function() {
-    var nodes, edges;
+    var lNodes, rNodes, edges;
     var init = function() {
         var finish_button = document.getElementById("finish_button");
         finish_button.onclick = function() {
 	    console.log('Done drawing');
 	    graphDraw.stop_draw();
-	    nodes = graphDraw.nodes;
+	    lNodes = graphDraw.lNodes;
+	    rNodes = graphDraw.rNodes;
 	    edges = graphDraw.edges;
-	    console.log(nodes);
+	    console.log('lNodes are');
+	    console.log(lNodes);
+	    console.log('rNodes are');
+	    console.log(rNodes);
+	    console.log('Edges are');
 	    console.log(edges);
 	    validateGraph();
 	    solveGraph();
