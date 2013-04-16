@@ -88,6 +88,13 @@ var graphDraw = (function() {
         canvas.addEventListener('mouseup',   ev_canvas, false);
     };
 
+    var stop_draw = function() {
+        canvas.removeEventListener('mousedown', ev_canvas);
+        canvas.removeEventListener('mousemove', ev_canvas);
+        canvas.removeEventListener('mouseup', ev_canvas);
+        clearTempCanvas();
+    }
+
     // The general-purpose event handler. This function just determines the mouse
     // position relative to the canvas element.
     var ev_canvas = function (ev) {
@@ -146,7 +153,6 @@ var graphDraw = (function() {
                 drawX(ev._x, ev._y);
             }
         };
-
         this.mouseup = function (ev) {
         };
     };
@@ -169,23 +175,26 @@ var graphDraw = (function() {
         };
 
         this.mousemove = function (ev) {
+            var nearNode = null;
             this.endNode = null;
-            if (this.startNode == null) {
-                return;
-            }
-            drawNode(nodes[this.startNode].x, nodes[this.startNode].y, 'blue');
             for (var i = 0; i < nodes.length; ++i)
             {
                 if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < 2 * node_radius)
                 {
-                    if (i != this.startNode)
-                    {
-                        drawNode(nodes[i].x, nodes[i].y, 'blue');
-                        this.endNode = i;
-                    }
+                    drawNode(nodes[i].x, nodes[i].y, 'blue');
+                    nearNode = i;
                     break;
                 }
             }
+
+            if (this.startNode == null) {
+                return;
+            }
+            if (nearNode != null)
+            {
+              this.endNode = i;
+            }
+            drawNode(nodes[this.startNode].x, nodes[this.startNode].y, 'blue');
             context.beginPath();
             context.moveTo(nodes[this.startNode].x, nodes[this.startNode].y);
             context.lineTo(ev._x, ev._y);
@@ -194,20 +203,24 @@ var graphDraw = (function() {
         };
 
         this.mouseup = function (ev) {
-            context.clearRect(0, 0, canvas.width, canvas.height);
             if (this.startNode == null || this.endNode == null)
             {
                 this.startNode = null;
                 this.endNode = null;
                 return;
             }
+            drawNode(nodes[this.startNode].x, nodes[this.startNode].y, 'blue')
+            drawNode(nodes[this.endNode].x, nodes[this.endNode].y, 'blue');
             if (!edgeExists(this.startNode, this.endNode))
             {
                 var weight = parseFloat(prompt("Edge Weight",0));
-                while (isNaN(weight))
+                if (isNaN(weight))
                 {
-                    weight = parseFloat(prompt("Please enter a valid float value", 0));
+                    this.startNode = null;
+                    this.endNode = null;
+                    return;
                 }
+                clearTempCanvas();
                 drawEdge(this.startNode, this.endNode, weight);
                 img_update();
                 edges.push({n1: this.startNode, n2: this.endNode, w: weight});
@@ -408,9 +421,26 @@ var graphDraw = (function() {
         }
     };
     return {
-        init: init
+        init: init,
+        stop_draw: stop_draw,
+        nodes: nodes,
+        edges: edges
     };
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function lineDistance( x1, y1, x2, y2 )
 {

@@ -1,0 +1,4 @@
+var graphLogic = (function() {
+                      var init = function() {
+
+})();
