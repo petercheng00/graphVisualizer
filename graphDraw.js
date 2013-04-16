@@ -312,7 +312,8 @@ var graphDraw = (function() {
     tools.eraser = function () {
         this.mousedown = function (ev) {
 	    var nodes = [];
-	    if (onLeft(ev._x, ev._y))
+            var l = onLeft(ev._x, ev._y);
+	    if (l)
 	    {
 		nodes = lNodes;
 	    }
@@ -324,7 +325,14 @@ var graphDraw = (function() {
             {
                 if (lineDistance(ev._x, ev._y, nodes[i].x, nodes[i].y) < node_radius)
                 {
-                    removeNode(onLeft, i);
+                    if (l)
+                    {
+                        removeLNode(i);
+                    }
+                    else
+                    {
+                        removeRNode(i);
+                    }
                     clearCanvas();
                     initCanvas();
                     drawNodes();
@@ -339,6 +347,7 @@ var graphDraw = (function() {
                 {
                     edges.splice(i,1);
                     clearCanvas();
+                    initCanvas();
                     drawNodes();
                     drawEdges();
                     img_update();
@@ -348,14 +357,23 @@ var graphDraw = (function() {
         };
 
         this.mousemove = function (ev) {
-            for (var i = 0; i < nodes.length; ++i)
+            for (var i = 0; i < lNodes.length; ++i)
             {
-		if (onNode(nodes[i], ev._x, ev._y))
+		if (onNode(lNodes[i], ev._x, ev._y))
                 {
-                    drawNode(nodes[i].x, nodes[i].y, '#aa0000', '#440000');
+                    drawNode(lNodes[i].x, lNodes[i].y, '#aa0000', '#440000');
                     return;
                 }
             }
+            for (var i = 0; i < rNodes.length; ++i)
+            {
+		if (onNode(rNodes[i], ev._x, ev._y))
+                {
+                    drawNode(rNodes[i].x, rNodes[i].y, '#aa0000', '#440000');
+                    return;
+                }
+            }
+
             for (var i = 0; i < edges.length; ++i)
             {
 		if (onEdge(edges[i], ev._x, ev._y))
@@ -422,7 +440,7 @@ var graphDraw = (function() {
 
     var onEdge = function(e, x, y)
     {
-	return (distToSegment({x: x, y:y}, nodes[e.l], nodes[e.r]) < node_radius)
+	return (distToSegment({x: x, y:y}, lNodes[e.l], rNodes[e.r]) < node_radius)
     };
 
     var canDrawNode = function(x, y)
@@ -454,17 +472,21 @@ var graphDraw = (function() {
     };
     var drawNodes = function()
     {
-	for (var i = 0; i < nodes.length; ++i)
+	for (var i = 0; i < lNodes.length; ++i)
 	{
-	    drawNode(nodes[i].x, nodes[i].y);
+	    drawNode(lNodes[i].x, lNodes[i].y);
 	}
+        for (var i = 0; i < rNodes.length; ++i)
+        {
+            drawNode(rNodes[i].x, rNodes[i].y);
+        }
     };
 
     var drawEdges = function ()
     {
 	for (var i = 0; i < edges.length; ++i)
 	{
-	    drawEdge(edges[i].n1, edges[i].n2, edges[i].w);
+	    drawEdge(edges[i].l, edges[i].r, edges[i].w);
 	}
     };
 
@@ -553,28 +575,43 @@ var graphDraw = (function() {
 	    rNodes.push({x:x, y:y});
 	}
     }
-    var removeNode = function(i)
+    var removeLNode = function(i)
     {
-	nodes.splice(i, 1);
+	lNodes.splice(i, 1);
 	for (var j = edges.length-1; j >= 0; --j)
 	{
-	    if (edges[j].n1 == i || edges[j].n2 == i)
+	    if (edges[j].l == i)
 	    {
 		edges.splice(j,1);
 	    }
 	    else
 	    {
-		if (edges[j].n1 > i)
+		if (edges[j].l > i)
 		{
-		    --edges[j].n1;
-		}
-		if (edges[j].n2 > i)
-		{
-		    --edges[j].n2;
+		    --edges[j].l;
 		}
 	    }
 	}
     };
+    var removeRNode = function(i)
+    {
+	rNodes.splice(i, 1);
+	for (var j = edges.length-1; j >= 0; --j)
+	{
+	    if (edges[j].r == i)
+	    {
+		edges.splice(j,1);
+	    }
+	    else
+	    {
+		if (edges[j].r > i)
+		{
+		    --edges[j].r;
+		}
+	    }
+	}
+    };
+
     return {
 	init: init,
 	stop_draw: stop_draw,
