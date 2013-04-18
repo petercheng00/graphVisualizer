@@ -19,6 +19,8 @@ var graphDraw = (function() {
 
     var weightColor = 'blue';
 
+
+
     var init = function() {
         // Find the canvas element.
         canvaso = document.getElementById('imageView');
@@ -56,11 +58,10 @@ var graphDraw = (function() {
 
         var clear_button = document.getElementById("clear_button");
         clear_button.onclick = function() {
-            clearCanvas();
-	    initCanvas();
             lNodes = [];
 	    rNodes = [];
             edges = [];
+	    redrawGraph();
         }
 
         var tool_radios = document.toolForm.toolRadios;
@@ -164,8 +165,8 @@ var graphDraw = (function() {
 
     // The edge tool.
     tools.edge = function () {
-        this.lNode = null;
-        this.rNode = null;
+        this.l = null;
+        this.r = null;
 
         this.mousedown = function (ev) {
 	    var nodes = [];
@@ -184,11 +185,11 @@ var graphDraw = (function() {
                 {
 		    if (l)
 		    {
-			this.lNode = i;
+			this.l = i;
 		    }
 		    else
 		    {
-			this.rNode = i;
+			this.r = i;
 		    }
                     drawNode(nodes[i].x, nodes[i].y, nodeHighlightColor);
                     return;
@@ -200,7 +201,7 @@ var graphDraw = (function() {
 
         this.mousemove = function (ev) {
 	    var nearNode = null;
-	    if (this.lNode == null)
+	    if (this.l == null)
 	    {
 		for (var i = 0; i < lNodes.length; ++i)
 		{
@@ -212,7 +213,7 @@ var graphDraw = (function() {
                     }
 		}
 	    }
-	    if (this.rNode == null)
+	    if (this.r == null)
 	    {
 		for (var i = 0; i < rNodes.length; ++i)
 		{
@@ -224,22 +225,22 @@ var graphDraw = (function() {
                     }
 		}
 	    }
-	    if (this.lNode == null && this.rNode == null)
+	    if (this.l == null && this.r == null)
 	    {
 		return;
 	    }
 
 	    var startX = null;
 	    var startY = null;
-	    if (this.lNode != null)
+	    if (this.l != null)
 	    {
-		startX = lNodes[this.lNode].x;
-		startY = lNodes[this.lNode].y;
+		startX = lNodes[this.l].x;
+		startY = lNodes[this.l].y;
 	    }
-            if (this.rNode != null)
+            if (this.r != null)
 	    {
-		startX = rNodes[this.rNode].x;
-		startY = rNodes[this.rNode].y;
+		startX = rNodes[this.r].x;
+		startY = rNodes[this.r].y;
 	    }
 
             drawNode(startX, startY, 'blue');
@@ -251,57 +252,56 @@ var graphDraw = (function() {
         };
 
         this.mouseup = function (ev) {
-            if (this.lNode == null && this.rNode == null)
+            if (this.l == null && this.r == null)
             {
                 return;
             }
-            if (this.lNode == null)
+            if (this.l == null)
             {
                 for (var i = 0; i < lNodes.length; ++i)
                 {
                     if (onNode(lNodes[i], ev._x, ev._y))
                     {
-                        this.lNode = i;
+                        this.l = i;
                         break;
                     }
                 }
             }
-            if (this.rNode == null)
+            if (this.r == null)
             {
                 for (var i = 0; i < rNodes.length; ++i)
                 {
                     if (onNode(rNodes[i], ev._x, ev._y))
                     {
-                        this.rNode = i;
+                        this.r = i;
                         break;
                     }
                 }
             }
 
-            if (this.lNode == null || this.rNode == null)
+            if (this.l == null || this.r == null)
             {
-                this.lNode = null;
-                this.rNode = null;
+                this.l = null;
+                this.r = null;
                 return;
             }
-            drawNode(lNodes[this.lNode].x, lNodes[this.lNode].y, 'blue')
-            drawNode(rNodes[this.rNode].x, rNodes[this.rNode].y, 'blue');
-            if (!edgeExists(this.lNode, this.rNode))
+            drawNode(lNodes[this.l].x, lNodes[this.l].y, 'blue')
+            drawNode(rNodes[this.r].x, rNodes[this.r].y, 'blue');
+            if (!edgeExists(this.l, this.r))
             {
                 var weight = parseFloat(prompt("Edge Weight",0));
                 if (isNaN(weight))
                 {
-                    this.lNode = null;
-                    this.rNode = null;
+                    this.l = null;
+                    this.r = null;
                     return;
                 }
                 clearTempCanvas();
-                drawEdge(this.lNode, this.rNode, weight);
-                img_update();
-                edges.push({l: this.lNode, r: this.rNode, w: weight});
+		addEdge(this.l, this.r, weight);
+		redrawGraph();
             }
-            this.lNode = null;
-            this.rNode = null;
+            this.l = null;
+            this.r = null;
         };
     };
 
@@ -334,10 +334,7 @@ var graphDraw = (function() {
                         removeRNode(i);
                     }
                     clearCanvas();
-                    initCanvas();
-                    drawNodes();
-                    drawEdges();
-                    img_update();
+		    redrawGraph();
                     return;
                 }
             }
@@ -347,10 +344,7 @@ var graphDraw = (function() {
                 {
                     edges.splice(i,1);
                     clearCanvas();
-                    initCanvas();
-                    drawNodes();
-                    drawEdges();
-                    img_update();
+		    redrawGraph();
                     return;
                 }
             }
@@ -378,7 +372,7 @@ var graphDraw = (function() {
             {
 		if (onEdge(edges[i], ev._x, ev._y))
                 {
-                    drawEdge(edges[i].l, edges[i].r, edges[i].w, 'red');
+                    drawEdge(edges[i].l, edges[i].r, 'red');
                     return;
                 }
             }
@@ -416,6 +410,17 @@ var graphDraw = (function() {
 
 
     };
+
+    var redrawGraph = function()
+    {
+        clearCanvas();
+        clearTempCanvas();
+        initCanvas();
+        drawNodes();
+        drawEdges();
+	drawWeights();
+        img_update();
+    }
 
     var clearTempCanvas = function()
     {
@@ -486,7 +491,7 @@ var graphDraw = (function() {
     {
 	for (var i = 0; i < edges.length; ++i)
 	{
-	    drawEdge(edges[i].l, edges[i].r, edges[i].w);
+	    drawEdge(edges[i].l, edges[i].r);
 	}
     };
 
@@ -520,7 +525,7 @@ var graphDraw = (function() {
 	context.closePath();
     };
 
-    var drawEdge = function(i1, i2, weight, color)
+    var drawEdge = function(i1, i2, color)
     {
 	color = typeof color !== 'undefined' ? color : edgeColor;
 	var x1 = lNodes[i1].x;
@@ -534,22 +539,71 @@ var graphDraw = (function() {
 	context.lineTo(x2, y2);
 	context.stroke();
 	context.closePath();
+    };
 
-	context.textAlign='center'
-	context.font="15px Arial";
+    var addEdge = function(i1, i2, weight)
+    {
+	edges.push({l: i1, r: i2, w:weight});
+    };
 
-	context.beginPath();
-	context.strokeStyle = 'white';
-	context.lineWidth = 7;
-	context.strokeText(weight,(x1+x2)/2,(y1+y2)/2);
-	context.stroke();
-	context.closePath();
+    var drawWeights = function()
+    {
+	var intersections = [];
+	for (var i = 0; i < edges.length; ++i)
+	{
+	    for (var j = i+1; j < edges.length; ++j)
+	    {
+                var p = getIntersection({x1:lNodes[edges[i].l].x,y1:lNodes[edges[i].l].y, x2:rNodes[edges[i].r].x, y2:rNodes[edges[i].r].y}, {x1:lNodes[edges[j].l].x,y1:lNodes[edges[j].l].y, x2:rNodes[edges[j].r].x, y2:rNodes[edges[j].r].y})
+                if (p != null)
+                {
+		    intersections.push(p);
+                }
+	    }
+	}
+	for (var i = 0; i < edges.length; ++i)
+	{
+	    var x1 = lNodes[edges[i].l].x;
+	    var x2 = rNodes[edges[i].r].x;
+	    var y1 = lNodes[edges[i].l].y;
+	    var y2 = rNodes[edges[i].r].y;
+	    context.textAlign='center'
+	    context.font="15px Arial";
+	    xLocation = (x1+x2) * 0.5;
+	    yLocation = (y1+y2) * 0.5;
+            
+	    var locations = [{x:(x1+x2)*0.5,y:(y1+y2)*0.5}, {x:(x1*0.75+x2*0.25), y:(y1*0.75+y2*0.25)}, {x:(x1*0.25+x2*0.75), y:(y1*0.25+y2*0.75)}];
+	    for (var j = 0; j < locations.length; ++j)
+	    {
+		var blocked = false;
+		for (var k = 0; k < intersections.length; ++k)
+		{
+		    if (lineDistance(locations[j].x, locations[j].y, intersections[k].x, intersections[k].y) < 20)
+		    {
+			blocked = true;
+			break;
+		    }
+		}
+		if (!blocked)
+		{
+		    xLocation = locations[j].x;
+		    yLocation = locations[j].y;
+		    break;
+		}
+	    }
 
-	context.beginPath();
-	context.fillStyle = weightColor;
-	context.fillText(weight,(x1+x2)/2,(y1+y2)/2);
-	context.fill();
-	context.closePath();
+	    context.beginPath();
+	    context.strokeStyle = 'white';
+	    context.lineWidth = 7;
+	    context.strokeText(edges[i].w, xLocation, yLocation);
+	    context.stroke();
+	    context.closePath();
+
+	    context.beginPath();
+	    context.fillStyle = weightColor;
+	    context.fillText(edges[i].w, xLocation, yLocation);
+	    context.fill();
+	    context.closePath();
+	}
     };
 
     var edgeExists = function(in1, in2)
@@ -661,4 +715,28 @@ function distToSegmentSquared(p, v, w) {
                       y: v.y + t * (w.y - v.y) });
 }
 function distToSegment(p, v, w) { return Math.sqrt(distToSegmentSquared(p, v, w)); }
+
+function getIntersection(l1, l2) {
+    var x1 = l1.x1;
+    var x2 = l1.x2;
+    var x3 = l2.x1;
+    var x4 = l2.x2;
+    var y1 = l1.y1;
+    var y2 = l1.y2;
+    var y3 = l2.y1;
+    var y4 = l2.y2;
+    var denom = ((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
+    if (denom == 0)
+    {
+	return null;
+    }
+    var px = ((x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4))/denom;
+    var py = ((x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4))/denom;
+    if ((px <= x1 && px >= x2) || (px >= x1 && px <= x2))
+    {
+	return {x: px, y: py};
+    }
+    return null;
+};
+
 
