@@ -58,9 +58,9 @@ var graphDraw = (function() {
 
         var clear_button = document.getElementById("clear_button");
         clear_button.onclick = function() {
-            lNodes = [];
-	    rNodes = [];
-            edges = [];
+            lNodes.length = 0;
+	    rNodes.length = 0;
+            edges.length = 0;
 	    redrawGraph();
         }
 
@@ -98,7 +98,13 @@ var graphDraw = (function() {
         canvas.removeEventListener('mousemove', ev_canvas);
         canvas.removeEventListener('mouseup', ev_canvas);
         clearTempCanvas();
-    }
+    };
+
+    var resume_draw = function() {
+        canvas.addEventListener('mousedown', ev_canvas, false);
+        canvas.addEventListener('mousemove', ev_canvas, false);
+        canvas.addEventListener('mouseup',   ev_canvas, false);
+    };
 
     // The general-purpose event handler. This function just determines the mouse
     // position relative to the canvas element.
@@ -570,7 +576,7 @@ var graphDraw = (function() {
 	    context.font="15px Arial";
 	    xLocation = (x1+x2) * 0.5;
 	    yLocation = (y1+y2) * 0.5;
-            
+
 	    var locations = [{x:(x1+x2)*0.5,y:(y1+y2)*0.5}, {x:(x1*0.75+x2*0.25), y:(y1*0.75+y2*0.25)}, {x:(x1*0.25+x2*0.75), y:(y1*0.25+y2*0.75)}];
 	    for (var j = 0; j < locations.length; ++j)
 	    {
@@ -669,6 +675,7 @@ var graphDraw = (function() {
     return {
 	init: init,
 	stop_draw: stop_draw,
+        resume_draw: resume_draw,
 	lNodes: lNodes,
 	rNodes: rNodes,
 	edges: edges

@@ -1,0 +1,6 @@
+#canvasdiv {
+    float:left;
+}
+#textdiv {
+    float:left;
+}
