@@ -94,6 +94,7 @@ var graphDraw = (function() {
     };
 
     var stop_draw = function() {
+        document.getElementById('clear_button').disabled = true;
         canvas.removeEventListener('mousedown', ev_canvas);
         canvas.removeEventListener('mousemove', ev_canvas);
         canvas.removeEventListener('mouseup', ev_canvas);
@@ -676,6 +677,7 @@ var graphDraw = (function() {
 	init: init,
 	stop_draw: stop_draw,
         resume_draw: resume_draw,
+        redrawGraph: redrawGraph,
 	lNodes: lNodes,
 	rNodes: rNodes,
 	edges: edges

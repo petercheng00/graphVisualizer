@@ -15,7 +15,6 @@
 	    <input type="radio" name="toolRadios" value="eraser"> Eraser <br>
 	  </form>
 	  <button id = "clear_button" type = "button">Clear All</button>
-	  <button id = "finish_button" type = "button">Done Drawing</button>
 	</p>
       </div>
       <div id="titlediv">
@@ -23,17 +22,19 @@
       </div>
     </div>
     <div id="div1">
-      <div id="canvasdiv">
+      <div id="leftcol">
 	<canvas id="imageView" width="600" height="500">
 	  <p>Unfortunately, your browser is currently unsupported by our web 
 	  application. Please try another browser, such as Chrome or Firefox instead. </p>
 	</canvas>
       </div>
 
-      <div id="textdiv">
-	<textarea id ="textBox" rows="30" cols = "40" readonly="true">
-	  hi and stuff
-	</textarea>
+      <div id="rightcol">
+	<div id="textBoxDiv">
+	  <textarea id ="textBox" rows="25" cols = "40" readonly="true">
+	  </textarea>
+	</div>
+	<button id = "continue_button" type = "button">Continue</button>
       </div>
     </div>
     <script type="text/javascript"

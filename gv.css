@@ -21,10 +21,10 @@
     float:bottom;
 }
 
-#canvasdiv {
+#leftcol {
     float:left;
 }
-#textdiv {
+#rightcol {
     float:left;
 }
 
@@ -38,3 +38,10 @@
     left: 3px;
 }
 
+#continue_button {
+    position: relative;
+    width: 150px;
+    height: 80px;
+    left: 90px;
+    font-size:2em;
+}
