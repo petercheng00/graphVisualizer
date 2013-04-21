@@ -1,46 +1,60 @@
 var graphLogic = (function() {
+    var states = Object.freeze({"draw":1, "validate":2, "filledges":3});
+    var state;
     // these are references
     var lNodes, rNodes, edges;
-    var clear_button, continue_button
+    var clear_button, continue_button;
     var init = function() {
         continue_button = document.getElementById("continue_button");
         clear_button = document.getElementById("clear_button");
-        waitForDraw();
-    };
 
-    var waitForDraw = function() {
+	state = states["draw"];
 	showText("Draw your bipartite graph in the area to the left. When finished, please click \"Continue\"");
-        continue_button.onclick = function() {
-            console.log('done drawing');
-            console.log(graphDraw.lNodes);
-            console.log(graphDraw.rNodes);
-            console.log(graphDraw.edges);
-
-	    graphDraw.stop_draw();
-	    lNodes = graphDraw.lNodes;
-	    rNodes = graphDraw.rNodes;
-	    edges = graphDraw.edges;
-	    if (validateGraph())
-            {
-                fillInGraph();
-            }
-            else
-            {
-                showText("Error - Graph does not have nodes on both sides. Please fix your graph and then click \"Done Drawing\"");
-                clear_button.disabled = false;
-                graphDraw.resume_draw();
-            }
-
+	continue_button.onclick = function() {
+	    continueController();
 	}
     };
 
-    var fillInGraph = function() {
-	showText("Graph is valid. Zero-weight edges will be added now.");
-	continue_button.onclick = function() {
+    var continueController = function() {
+	switch(state)
+	{
+	case states["draw"]:
+	    doneDrawing();
+	    break;
+	case states["validate"]:
 	    addZeroWeightEdges();
+	    break;
+	case states["filledges"]:
 	    solveGraph();
+	    break;
+	default:
+	    showText("You shouldn't see this");
 	}
-    }
+    };
+    
+
+    var doneDrawing = function() {
+        console.log('done drawing');
+        console.log(graphDraw.lNodes);
+        console.log(graphDraw.rNodes);
+        console.log(graphDraw.edges);
+
+	graphDraw.stop_draw();
+	lNodes = graphDraw.lNodes;
+	rNodes = graphDraw.rNodes;
+	edges = graphDraw.edges;
+	if (validateGraph())
+        {
+	    showText("Graph is valid. Zero-weight edges will be added now.");
+	    state = states["validate"];
+        }
+        else
+        {
+            showText("Error - Graph does not have nodes on both sides. Please fix your graph and then click \"Continue\"");
+            graphDraw.resume_draw();
+        }
+    };
+
 
     var showText = function(t) {
 	document.getElementById("textBox").value = t;
@@ -63,18 +77,14 @@ var graphLogic = (function() {
 		}
 	    }
 	}
+	state = states["filledges"];
+	showText("Click \"Continue\" to begin the algorithm");
     };
 
     var solveGraph = function() {
-	continue_button.onclick = function()
-	{
-	    showText("not implemented yet...");
-	}
+	showText("not implemented yet...");
     };
 
-    var showSteps = function() {
-	//show each step to get to solution
-    };
 
     var getEdge = function(lNode, rNode) {
         for (var i = 0; i < edges.length; ++i)

@@ -102,6 +102,7 @@ var graphDraw = (function() {
     };
 
     var resume_draw = function() {
+        document.getElementById('clear_button').disabled = false;
         canvas.addEventListener('mousedown', ev_canvas, false);
         canvas.addEventListener('mousemove', ev_canvas, false);
         canvas.addEventListener('mouseup',   ev_canvas, false);
