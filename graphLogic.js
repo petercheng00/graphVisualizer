@@ -80,8 +80,11 @@ var graphLogic = (function() {
 	for (var i = 0; i < lNodes.length; ++i)
 	{
 	    lNodes[i].p = 100;
-	    graphDraw.redrawGraph();
+
 	}
+	edges[0].matched = true;
+	edges[1].tight = true;
+	graphDraw.redrawGraph();
 	showText("not implemented yet...");
     };
 

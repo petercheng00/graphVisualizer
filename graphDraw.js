@@ -16,6 +16,9 @@ var graphDraw = (function() {
     var nodeBorderColor = '#003300'
 
     var edgeColor = 'black';
+    var edgeTightColor = 'red';
+    var edgeMatchedColor = 'green';
+
 
     var weightColor = 'blue';
 
@@ -500,7 +503,16 @@ var graphDraw = (function() {
     {
 	for (var i = 0; i < edges.length; ++i)
 	{
-	    drawEdge(edges[i].l, edges[i].r);
+	    c = edgeColor;
+	    if (edges[i].tight)
+	    {
+		c = edgeTightColor;
+	    }
+	    if (edges[i].matched)
+	    {
+		c = edgeMatchedColor;
+	    }
+	    drawEdge(edges[i].l, edges[i].r, c);
 	}
     };
 
