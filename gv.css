@@ -7,12 +7,20 @@
     float:left;
 }
 
-#titlediv {
+#bothtitlediv {
     float:left;
-    font-size:2.8em;
     position: relative;
-    top: 33px;
-    left: 20px;
+    top: 12px;
+    left: 60px;
+    text-align:center;
+}
+
+#titlediv {
+    font-size:2.8em;
+}
+
+#subtitlediv {
+    font-size:1.5em;
 }
 
 #div1 {

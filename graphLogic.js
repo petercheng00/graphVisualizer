@@ -34,11 +34,6 @@ var graphLogic = (function() {
     
 
     var doneDrawing = function() {
-        console.log('done drawing');
-        console.log(graphDraw.lNodes);
-        console.log(graphDraw.rNodes);
-        console.log(graphDraw.edges);
-
 	graphDraw.stop_draw();
 	lNodes = graphDraw.lNodes;
 	rNodes = graphDraw.rNodes;
@@ -46,7 +41,7 @@ var graphLogic = (function() {
 	if (validateGraph())
         {
 	    showText("Graph is valid. Zero-weight edges will be added now.");
-	    state = states["validate"];
+	    advanceState();
         }
         else
         {
@@ -77,7 +72,7 @@ var graphLogic = (function() {
 		}
 	    }
 	}
-	state = states["filledges"];
+	advanceState();
 	showText("Click \"Continue\" to begin the algorithm");
     };
 
@@ -85,6 +80,17 @@ var graphLogic = (function() {
 	showText("not implemented yet...");
     };
 
+
+
+    var advanceState = function() {
+	++state;
+	console.log("advancing state to " + state);
+    };
+
+    var setState = function(s) {
+	console.log("setting state to " + s);
+	state = states[s];
+    };
 
     var getEdge = function(lNode, rNode) {
         for (var i = 0; i < edges.length; ++i)
