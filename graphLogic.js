@@ -9,29 +9,28 @@ var graphLogic = (function() {
         clear_button = document.getElementById("clear_button");
 
 	state = states["draw"];
-	showText("Draw your bipartite graph in the area to the left. When finished, please click \"Continue\"");
-	continue_button.onclick = function() {
-	    continueController();
-	}
+	setupState();
     };
-
-    var continueController = function() {
+    
+    var setupState = function() {
 	switch(state)
 	{
 	case states["draw"]:
-	    doneDrawing();
+	    showText("Draw your bipartite graph in the area to the left. Hit the right arrow button below when finished drawing.");
+	    continue_button.onclick = doneDrawing;
 	    break;
 	case states["validate"]:
-	    addZeroWeightEdges();
+	    showText("Your graph is valid. Zero-weight edges will be added next to fill the graph.");
+	    continue_button.onclick = addZeroWeightEdges;
 	    break;
 	case states["filledges"]:
-	    solveGraph();
+	    showText("Zero-weight edges have been added to fill the graph.");
+	    continue_button.onclick = solveGraph;
 	    break;
 	default:
 	    showText("You shouldn't see this");
 	}
     };
-    
 
     var doneDrawing = function() {
 	graphDraw.stop_draw();
@@ -40,7 +39,6 @@ var graphLogic = (function() {
 	edges = graphDraw.edges;
 	if (validateGraph())
         {
-	    showText("Graph is valid. Zero-weight edges will be added now.");
 	    advanceState();
         }
         else
@@ -73,7 +71,6 @@ var graphLogic = (function() {
 	    }
 	}
 	advanceState();
-	showText("Click \"Continue\" to begin the algorithm");
     };
 
     var solveGraph = function() {
@@ -85,19 +82,20 @@ var graphLogic = (function() {
 	edges[0].matched = true;
 	edges[1].tight = true;
 	graphDraw.redrawGraph();
-	showText("not implemented yet...");
     };
 
 
 
     var advanceState = function() {
 	++state;
+	setupState();
 	console.log("advancing state to " + state);
     };
 
     var setState = function(s) {
 	console.log("setting state to " + s);
 	state = states[s];
+	setupState();
     };
 
     var getEdge = function(lNode, rNode) {

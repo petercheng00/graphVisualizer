@@ -50,6 +50,13 @@
     position: relative;
     width: 150px;
     height: 80px;
-    left: 90px;
+    left: 20px;
+    font-size:2em;
+}
+#back_button {
+    position: relative;
+    width: 150px;
+    height: 80px;
+    left: 20px;
     font-size:2em;
 }
