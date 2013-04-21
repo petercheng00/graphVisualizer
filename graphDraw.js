@@ -427,6 +427,7 @@ var graphDraw = (function() {
         drawNodes();
         drawEdges();
 	drawWeights();
+        drawPrices();
         img_update();
     }
 
@@ -554,6 +555,46 @@ var graphDraw = (function() {
 	edges.push({l: i1, r: i2, w:weight});
     };
 
+    var drawOutlinedText = function(t, x, y, lw, c1, c2)
+    {
+	context.textAlign='center'
+	context.font="15px Arial";
+	context.lineWidth = lw;
+
+	context.beginPath();
+	context.strokeStyle = c1;
+	context.strokeText(t, x, y);
+	context.stroke();
+	context.closePath();
+		
+	context.beginPath();
+	context.fillStyle = c2;
+	context.fillText(t, x, y);
+	context.fill();
+	context.closePath();
+    };
+
+    var drawPrices = function()
+    {
+	for (var i = 0; i < lNodes.length; ++i)
+	{
+	    n = lNodes[i];
+	    if (n.p != null)
+	    {
+		drawOutlinedText(n.p, n.x, n.y+4, 4, 'white', 'purple');
+	    }
+	}
+	for (var i = 0; i < rNodes.length; ++i)
+	{
+	    n = rNodes[i];
+	    if (n.p != null)
+	    {
+		drawOutlinedText(n.p, n.x, n.y+4, 4, 'white', 'purple');
+	    }
+	}
+
+    }
+
     var drawWeights = function()
     {
 	var intersections = [];
@@ -598,19 +639,7 @@ var graphDraw = (function() {
 		    break;
 		}
 	    }
-
-	    context.beginPath();
-	    context.strokeStyle = 'white';
-	    context.lineWidth = 7;
-	    context.strokeText(edges[i].w, xLocation, yLocation);
-	    context.stroke();
-	    context.closePath();
-
-	    context.beginPath();
-	    context.fillStyle = weightColor;
-	    context.fillText(edges[i].w, xLocation, yLocation);
-	    context.fill();
-	    context.closePath();
+	    drawOutlinedText(edges[i].w, xLocation, yLocation, 7, 'white', weightColor);
 	}
     };
 

@@ -77,6 +77,11 @@ var graphLogic = (function() {
     };
 
     var solveGraph = function() {
+	for (var i = 0; i < lNodes.length; ++i)
+	{
+	    lNodes[i].p = 100;
+	    graphDraw.redrawGraph();
+	}
 	showText("not implemented yet...");
     };
 
