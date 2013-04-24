@@ -1,8 +1,12 @@
 var graphLogic = (function() {
-    var states = Object.freeze({"draw":1, "validate":2, "filledges":3});
+
+//--------------- Variables and Initialization ---------------
+
+    var states = Object.freeze({"draw":1, "initialize":2, "tightEdges":3, "augmentPath":4, "updatePrices":5, "done":6});
     var state;
     // these are references
     var lNodes, rNodes, edges;
+    var rMatched, augPath, nodesSeen, minPrice;
     var clear_button, continue_button, back_button;
     var history = [];
     var init = function() {
@@ -15,53 +19,19 @@ var graphLogic = (function() {
 	setupState();
     };
     
-    var setupState = function() {
-	console.log("setup state: " + state);
-	switch(state)
-	{
-	case states["draw"]:
-	    showText("Draw your bipartite graph in the area to the left. Hit the right arrow button below when finished drawing.");
-            graphDraw.resume_draw();
-	    continue_button.onclick = function(){addToHistory();doneDrawing();};
-	    break;
-	case states["validate"]:
-	    showText("Your graph is valid. Zero-weight edges will be added next to fill the graph.");
-	    continue_button.onclick = function(){addToHistory();addZeroWeightEdges()};;
-	    break;
-	case states["filledges"]:
-	    showText("Zero-weight edges have been added to fill the graph.");
-	    continue_button.onclick = function(){addToHistory();solveGraph()};
-	    break;
-	default:
-	    showText("You shouldn't see this");
-	}
-    };
+//--------------- Maximum Matching Algorithm ---------------
 
-    var doneDrawing = function() {
+    var validateGraph = function() {
 	graphDraw.stop_draw();
 	lNodes = graphDraw.lNodes;
 	rNodes = graphDraw.rNodes;
 	edges = graphDraw.edges;
-	if (validateGraph())
-        {
-	    advanceState();
-        }
-        else
-        {
+        if (lNodes.length < 1 || rNodes.length < 1) {
             showText("Error - Graph does not have nodes on both sides. Please fix your graph and then click \"Continue\"");
 	    history.length = history.length -1;
             graphDraw.resume_draw();
         }
-    };
-
-
-    var showText = function(t) {
-	document.getElementById("textBox").value = t;
-    };
-
-
-    var validateGraph = function() {
-        return (lNodes.length >= 1 && rNodes.length >= 1)
+        else {addZeroWeightEdges();}
     };
 
     var addZeroWeightEdges = function() {
@@ -72,27 +42,173 @@ var graphLogic = (function() {
 		if (getEdge(i, j) == null)
 		{
 		    edges.push({l:i, r:j, w:0});
-		    graphDraw.redrawGraph();
 		}
 	    }
 	}
+        initVertexCover();
+    };
+    
+    var initVertexCover = function() {
+        for (var n = 0; n < rNodes.length; ++n) {
+            rNodes[n].p = 0;
+            rNodes[n].edges = [];
+        }
+        for (var n = 0; n < lNodes.length; ++n) {
+            var node = lNodes[n];
+            node.p = 0;
+            node.edges = getTouchingEdges(n);
+            for (var e = 0; e < node.edges.length; ++e) {
+                if (node.p < node.edges[e].w) {
+                    node.p = node.edges[e].w;
+                }
+                rNodes[node.edges[e].r].edges.push(node.edges[e]);
+            }
+        }
+        advanceState();
+    };
+
+    var colorTightEdges = function() {
+	for (var e = 0; e < edges.length; ++e)
+	{
+            if (isTightEdge(edges[e])) {
+                edges[e].tight = true;
+            }
+            else {
+                edges[e].tight = false;
+            }
+	}
 	advanceState();
     };
-
-    var solveGraph = function() {
-	for (var i = 0; i < lNodes.length; ++i)
-	{
-	    lNodes[i].p = 100;
-
-	}
-	edges[0].matched = true;
-	edges[1].tight = true;
-	graphDraw.redrawGraph();
-	setState(-1);
+    
+    var findAugment = function() {
+        augPath = [];
+        nodesSeen = [];
+        var matchedNodes = getMatchedNodes();
+        if (matchedNodes[0] >= lNodes.length) {
+            completeGraph();
+            return;
+        }
+        for (var n = 0; n < lNodes.length; ++n) {
+            if (!matchedNodes[1].hasOwnProperty(n)) {
+                if (findAugmentPath(n,true,[])) {
+                    advanceState();
+                    return;
+                }
+            }
+        }
+        highlightNodesSeen();
     };
 
-
-
+    var findAugmentPath = function(n,isLeft,edgesSeen) {
+        var node = isLeft ? lNodes[n] : rNodes[n];
+        nodesSeen.push([isLeft,node]);
+        for (var e = 0; e < node.edges.length; ++e) {
+            var edge = node.edges[e];
+            if (isTightEdge(edge) && edgesSeen.indexOf(edge)<0) {
+                if (isLeft && !edge.matched) {
+                    if (!rMatched.hasOwnProperty(edge.r)) {
+                        return augmentEdge(edge);
+                    }
+                    if (findAugmentPath(edge.r,false,edgesSeen.concat([edge]))) {
+                        return augmentEdge(edge);
+                    }
+                }
+                else if (!isLeft && edge.matched) {
+                    if (findAugmentPath(edge.l,true,edgesSeen.concat([edge]))) {
+                        return augmentEdge(edge);
+                    }
+                }
+            }
+        }
+        return false;
+    };
+    
+    var augmentEdge = function(edge) {
+        edge.augment = true;
+        augPath.push(edge);
+        return true;
+    };
+    
+    var augmentPath = function() {
+        for (var e = 0; e < augPath.length; ++e) {
+            augPath[e].augment = false;
+            augPath[e].matched = !augPath[e].matched;
+        }
+        setState("tightEdges");
+    };
+    
+    var highlightNodesSeen = function() {
+        minPrice = Infinity;
+        for (var n = 0; n < nodesSeen.length; ++n) {
+            if (nodesSeen[n][0] && nodesSeen[n][1].p < minPrice) {
+                minPrice = nodesSeen[n][1].p;
+            }
+            nodesSeen[n][1].highlight = true;
+        }
+        setState("updatePrices");
+    };
+    
+    var updatePrices = function() {
+        for (var n = 0; n < nodesSeen.length; ++n) {
+            if (nodesSeen[n][0]) {
+                nodesSeen[n][1].p -= minPrice;
+            }
+            else {
+                nodesSeen[n][1].p += minPrice;
+            }
+            nodesSeen[n][1].highlight = false;
+        }
+        setState("tightEdges");
+    };
+    
+    var completeGraph = function() {
+        for (var e = 0; e < edges.length; ++e) {
+            if (!edges[e].matched) {
+                edges.splice(e,e);
+                e--;
+            }
+        }
+        setState("done");
+    };
+    
+//--------------- Interaction States ---------------
+    
+    var setupState = function() {
+        graphDraw.redrawGraph();
+	console.log("setup state: " + state);
+	switch(state)
+	{
+	case states["draw"]:
+	    showText("Draw your bipartite graph in the area to the left. Hit the right arrow button below when finished drawing.");
+            graphDraw.resume_draw();
+	    continue_button.onclick = function(){addToHistory(); validateGraph();}
+	    break;
+	case states["initialize"]:
+	    showText("Zero-weight edges added. Vertex values of left side initialized to maximum weight of touching edges." +
+                     " Vertex values of right side initialized to zero.");
+	    continue_button.onclick = function(){addToHistory(); colorTightEdges();}
+	    break;
+	case states["tightEdges"]:
+	    showText("Matched edges in green.\nTight edges in red.");
+	    continue_button.onclick = function(){addToHistory(); findAugment();}
+	    break;
+        case states["augmentPath"]:
+	    showText("Augmented path colored in yellow.");
+	    continue_button.onclick = function(){addToHistory(); augmentPath();}
+	    break;
+        case states["updatePrices"]:
+	    showText("Update prices.");
+	    continue_button.onclick = function(){addToHistory(); updatePrices();}
+	    break;
+        case states["done"]:
+	    showText("Done.");
+	    continue_button.onclick = function(){addToHistory();}
+	    break;
+	default:
+	    showText("You shouldn't see this");
+	}
+    };
+    
     var advanceState = function() {
 	++state;
 	setupState();
@@ -103,18 +219,56 @@ var graphLogic = (function() {
 	state = states[s];
 	setupState();
     };
-
+    
+    var showText = function(t) {
+	document.getElementById("textBox").value = t;
+    };
+    
+//--------------- Helper Functions ---------------
+    
     var getEdge = function(lNode, rNode) {
-        for (var i = 0; i < edges.length; ++i)
+        for (var e = 0; e < edges.length; ++e)
         {
-            if (edges[i].l == lNode && edges[i].r == rNode)
+            if (edges[e].l == lNode && edges[e].r == rNode)
             {
-                return edges[i];
+                return edges[e];
             }
         }
 	return null;
     };
-
+    
+    var getTouchingEdges = function(lNode) {
+        var touchingEdges = [];
+        for (var e = 0; e < edges.length; ++e)
+        {
+            if (edges[e].l == lNode)
+            {
+                touchingEdges.push(edges[e]);
+            }
+        }
+	return touchingEdges;
+    };
+    
+    var isTightEdge = function(edge) {
+        return (lNodes[edge.l].p + rNodes[edge.r].p) == edge.w;
+    };
+    
+    var getMatchedNodes = function() {
+        var size = 0;
+        var lMatched = {};
+        rMatched = {};
+        for (var e = 0; e < edges.length; ++e) {
+            if (edges[e].matched) {
+                size++;
+                lMatched[edges[e].l] = true;
+                rMatched[edges[e].r] = true;
+            }
+        }
+        return [size, lMatched];
+    };
+    
+//--------------- History ---------------
+    
     var goBack = function() {
 	if (history.length == 0)
 	{
@@ -140,16 +294,17 @@ var graphLogic = (function() {
 	{
 	    edges.push(history[history.length-1].edges[i]);
 	}
-	history.length = history.length -1;
+	history.length = history.length-1;
 	graphDraw.redrawGraph();
 	setupState();
-    }
+    };
 
     var addToHistory = function() {
 	console.log("adding to history");
 	cloneLNodes = [];
 	cloneRNodes = [];
 	cloneEdges = [];
+        cloneMatchedEdges = {};
 	for (var i = 0; i < graphDraw.lNodes.length; ++i)
 	{
 	    cloneLNodes.push(clone(graphDraw.lNodes[i]));
@@ -162,13 +317,12 @@ var graphLogic = (function() {
 	{
 	    cloneEdges.push(clone(graphDraw.edges[i]));
 	}
-	history.push({state:state, lNodes:cloneLNodes,rNodes:cloneRNodes,edges:cloneEdges});
+	history.push({state:state, lNodes:cloneLNodes, rNodes:cloneRNodes, edges:cloneEdges});
 	if (history.length > 0)
 	{
 	    back_button.disabled = false;
 	}
-    }
-
+    };
 
     return {
 	init: init,

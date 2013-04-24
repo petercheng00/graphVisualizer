@@ -18,7 +18,7 @@ var graphDraw = (function() {
     var edgeColor = 'black';
     var edgeTightColor = 'red';
     var edgeMatchedColor = 'green';
-
+    var edgeAugmentColor = 'yellow';
 
     var weightColor = 'blue';
 
@@ -487,31 +487,44 @@ var graphDraw = (function() {
 	}
 	return true;
     };
+    
     var drawNodes = function()
     {
 	for (var i = 0; i < lNodes.length; ++i)
 	{
-	    drawNode(lNodes[i].x, lNodes[i].y);
+            c = nodeColor;
+            if (lNodes[i].highlight) {
+                c = nodeHighlightColor;
+            }
+	    drawNode(lNodes[i].x, lNodes[i].y, c);
 	}
         for (var i = 0; i < rNodes.length; ++i)
         {
-            drawNode(rNodes[i].x, rNodes[i].y);
+            c = nodeColor;
+            if (rNodes[i].highlight) {
+                c = nodeHighlightColor;
+            }
+            drawNode(rNodes[i].x, rNodes[i].y, c);
         }
     };
 
-    var drawEdges = function ()
+    var drawEdges = function()
     {
 	for (var i = 0; i < edges.length; ++i)
 	{
 	    c = edgeColor;
-	    if (edges[i].tight)
+	    if (edges[i].augment)
 	    {
-		c = edgeTightColor;
+		c = edgeAugmentColor;
 	    }
-	    if (edges[i].matched)
+	    else if (edges[i].matched)
 	    {
 		c = edgeMatchedColor;
 	    }
+            else if (edges[i].tight)
+            {
+                c = edgeTightColor;
+            }
 	    drawEdge(edges[i].l, edges[i].r, c);
 	}
     };
@@ -789,5 +802,4 @@ function getIntersection(l1, l2) {
     }
     return null;
 };
-
 
