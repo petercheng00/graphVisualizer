@@ -6,7 +6,8 @@ var graphLogic = (function() {
     var state;
     // these are references
     var lNodes, rNodes, edges;
-    var rMatched, augPath, nodesSeen, minPrice;
+    var rMatched, augPath, minPrice;
+    var nodesSeen = [];
     var clear_button, continue_button, back_button;
     var history = [];
     var init = function() {
@@ -158,13 +159,14 @@ var graphLogic = (function() {
             }
             nodesSeen[n][1].highlight = false;
         }
+        colorTightEdges();
         setState("tightEdges");
     };
     
     var completeGraph = function() {
         for (var e = 0; e < edges.length; ++e) {
             if (!edges[e].matched) {
-                edges.splice(e,e);
+                edges.splice(e,1);
                 e--;
             }
         }
@@ -179,33 +181,38 @@ var graphLogic = (function() {
 	switch(state)
 	{
 	case states["draw"]:
-	    showText("Draw your bipartite graph in the area to the left. Hit the right arrow button below when finished drawing.");
+	    showText("Draw your bipartite graph in the area to the left.\nHit the right arrow button below when finished drawing.");
             graphDraw.resume_draw();
 	    continue_button.onclick = function(){addToHistory(); validateGraph();}
 	    break;
 	case states["initialize"]:
-	    showText("Zero-weight edges added. Vertex values of left side initialized to maximum weight of touching edges." +
-                     " Vertex values of right side initialized to zero.");
+	    showText("Zero-weight edges added.\nVertex values of left side initialized to maximum weight of touching edges.\n" +
+                     "Vertex values of right side initialized to zero.");
 	    continue_button.onclick = function(){addToHistory(); colorTightEdges();}
 	    break;
 	case states["tightEdges"]:
-	    showText("Matched edges in green.\nTight edges in red.");
+	    showText("Matched edges in green.\nTight edges in red.\nOther edges in black.");
 	    continue_button.onclick = function(){addToHistory(); findAugment();}
 	    break;
         case states["augmentPath"]:
-	    showText("Augmented path colored in yellow.");
+	    showText("Augmented Path Algorithm\nGoal: Reach an unmatched node on right side starting from an unmatched node on left side.\n" +
+                     "Constraints: Use only unmatched tight edges when going from left to right, and matched edges when going from right to left.\n\n" +
+                     "Found an augmented path (colored in yellow). Will swap the matched and unmatched edges in the path to increase the matching by 1 edge.");
 	    continue_button.onclick = function(){addToHistory(); augmentPath();}
 	    break;
         case states["updatePrices"]:
-	    showText("Update prices.");
+	    showText("Nodes in blue can be reached by paths starting from an unmatched node on left side subjected to constraints below.\n" +
+                     "Constraints: Use only unmatched tight edges when going from left to right, and matched edges when going from right to left.\n\n" +
+                     "Will update node prices - blue nodes on left will decrease their prices by the minimum left blue node price, while blue nodes " +
+                     "on right will increase their prices by the same amount.");
 	    continue_button.onclick = function(){addToHistory(); updatePrices();}
 	    break;
         case states["done"]:
-	    showText("Done.");
+	    showText("Matching completed - all nodes on left side are matched to a different node on right side.");
 	    continue_button.onclick = function(){addToHistory();}
 	    break;
 	default:
-	    showText("You shouldn't see this");
+	    showText("Congratulations! You hacked the code. You shouldn't see this.");
 	}
     };
     
@@ -278,22 +285,30 @@ var graphLogic = (function() {
 	{
 	    back_button.disabled = true;
 	}
-	state = history[history.length-1].state;
+        var prevHistory = history[history.length-1];
+	state = prevHistory.state;
 	lNodes.length = 0;
 	rNodes.length = 0;
 	edges.length = 0;
-	for (var i = 0; i < history[history.length-1].lNodes.length; ++i)
+        nodesSeen.length = 0;
+	for (var i = 0; i < prevHistory.lNodes.length; ++i)
 	{
-	    lNodes.push(history[history.length-1].lNodes[i]);
+	    lNodes.push(prevHistory.lNodes[i]);
 	}
-	for (var i = 0; i < history[history.length-1].rNodes.length; ++i)
+	for (var i = 0; i < prevHistory.rNodes.length; ++i)
 	{
-	    rNodes.push(history[history.length-1].rNodes[i]);
+	    rNodes.push(prevHistory.rNodes[i]);
 	}
-	for (var i = 0; i < history[history.length-1].edges.length; ++i)
+	for (var i = 0; i < prevHistory.edges.length; ++i)
 	{
-	    edges.push(history[history.length-1].edges[i]);
+	    edges.push(prevHistory.edges[i]);
 	}
+	for (var i = 0; i < prevHistory.nodesSeen.length; ++i)
+	{
+	    nodesSeen.push(prevHistory.nodesSeen[i]);
+	}
+        minPrice = prevHistory.minPrice;
+        
 	history.length = history.length-1;
 	graphDraw.redrawGraph();
 	setupState();
@@ -304,7 +319,7 @@ var graphLogic = (function() {
 	cloneLNodes = [];
 	cloneRNodes = [];
 	cloneEdges = [];
-        cloneMatchedEdges = {};
+        cloneNodesSeen = [];
 	for (var i = 0; i < graphDraw.lNodes.length; ++i)
 	{
 	    cloneLNodes.push(clone(graphDraw.lNodes[i]));
@@ -317,7 +332,11 @@ var graphLogic = (function() {
 	{
 	    cloneEdges.push(clone(graphDraw.edges[i]));
 	}
-	history.push({state:state, lNodes:cloneLNodes, rNodes:cloneRNodes, edges:cloneEdges});
+	for (var i = 0; i < nodesSeen.length; ++i)
+	{
+	    cloneNodesSeen.push(clone(nodesSeen[i]));
+	}
+	history.push({state:state, lNodes:cloneLNodes, rNodes:cloneRNodes, edges:cloneEdges, nodesSeen:cloneNodesSeen, minPrice:minPrice});
 	if (history.length > 0)
 	{
 	    back_button.disabled = false;
