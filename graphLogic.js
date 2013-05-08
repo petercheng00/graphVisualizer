@@ -211,38 +211,38 @@ var graphLogic = (function() {
 	switch(state)
 	{
 	case states["draw"]:
-	    showText("Draw your bipartite graph in the area to the left.\nHit the right arrow button below when finished drawing.");
+	    showText("Draw your bipartite graph in the area to the left.\nHit the right arrow button below (or use your arrow key) when finished drawing.");
             graphDraw.resume_draw();
 	    continue_button.onclick = function(){addToHistory(); validateGraph();}
 	    break;
 	case states["initialize"]:
-	    showText("Zero-weight edges added.\nVertex values of left side initialized to maximum weight of touching edges.\n" +
-                     "Vertex values of right side initialized to zero.");
+	    showText("Zero-weight edges have been added; the graph is now completely connected.\n\nVertex values (prices) of the nodes on the left side have been initialized to the maximum weight of their incident edges.\n" +
+                     "Vertex values on the right side have been initialized to zero.\n\nConstraint: The sum of two vertex prices is always at least the weight of the edge between them.");
 	    continue_button.onclick = function(){addToHistory(); colorTightEdges();}
 	    break;
 	case states["tightEdges"]:
-	    showText("Matched edges in green.\nTight edges in red.\nOther edges in black.");
+	    showText("Edges that are part of the current matching are shown in green.\nTight edges are red.\nOther edges in black.\n\nA tight edge is one where its weight is exactly equal to the sum of the prices of its two endpoints.");
 	    continue_button.onclick = function(){addToHistory(); findAugment();}
 	    break;
         case states["augmentPath"]:
-	    showText("Augmented Path Algorithm\nGoal: Reach an unmatched node on right side starting from an unmatched node on left side.\n" +
+	    showText("Find an Augmented Path\nGoal: Reach an unmatched node on the right side, starting from an unmatched node on the left side.\n\n" +
                      "Constraints: Use only unmatched tight edges when going from left to right, and matched edges when going from right to left.\n\n" +
-                     "Found an augmented path (colored in purple). Will swap the matched and unmatched edges in the path to increase the matching by 1 edge.");
+                     "An augmented path (colored in purple) has been found. Next, the matched and unmatched edges in the augmented path will be swapped in order to increase the number of edges in the matching by 1.");
 	    continue_button.onclick = function(){addToHistory(); augmentPath();}
 	    break;
         case states["updatePrices"]:
-	    showText("Nodes in blue can be reached by paths starting from an unmatched node on left side subjected to constraints below.\n" +
-                     "Constraints: Use only unmatched tight edges when going from left to right, and matched edges when going from right to left.\n" +
+	    showText("Nodes in blue can be reached by paths starting from an unmatched node on the left side subjected to the constraints below.\n" +
+                     "Constraints: Use only unmatched tight edges when going from left to right, and matched edges when going from right to left.\n\n" +
                      "Lemma: There are no tight edges between blue nodes on left side and green nodes on right side.\n\n" +
                      "Blue nodes will adjust their prices by the minimum difference between the weight of edges linking " +
-                     "left blue nodes and right green nodes and the sum of the touching node prices for the same edges.\n" +
+                     "left blue nodes and right green nodes and the sum of incident node prices for the same edges.\n" +
                      "Blue nodes on the left will decrease their prices by the amount below, while blue nodes on the right " +
                      "will increase their prices by the same amount.\n" +
                      "Minimum Edge Difference: " + minEdgeDiff);
 	    continue_button.onclick = function(){addToHistory(); updatePrices();}
 	    break;
         case states["done"]:
-	    showText("Matching completed - all nodes on left side are matched to a different node on right side, with maximum weight across all selected edges.");
+	    showText("Matching completed - all nodes on the left side are matched to a different node on the right side, with maximum weight across all selected edges.");
 	    continue_button.onclick = function(){addToHistory();}
 	    break;
 	default:
