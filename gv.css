@@ -60,3 +60,11 @@
     left: 20px;
     font-size:2em;
 }
+
+#footer {
+    text-align:center;
+    font-size:0.8em;
+    float:left;
+    position: relative;
+    left: 250px;
+}
