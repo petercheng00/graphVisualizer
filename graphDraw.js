@@ -18,7 +18,7 @@ var graphDraw = (function() {
     var edgeColor = 'black';
     var edgeTightColor = 'red';
     var edgeMatchedColor = 'green';
-    var edgeAugmentColor = 'yellow';
+    var edgeAugmentColor = 'purple';
 
     var weightColor = 'blue';
 
@@ -97,17 +97,33 @@ var graphDraw = (function() {
     };
 
     var stop_draw = function() {
+        var tool_radios = document.toolForm.toolRadios;
+        for (var i = 0; i < tool_radios.length; ++i)
+        {
+            tool_radios[i].disabled = true;
+        }
+	tool = new tools['highlight']();
         document.getElementById('clear_button').disabled = true;
         canvas.removeEventListener('mousedown', ev_canvas);
-        canvas.removeEventListener('mousemove', ev_canvas);
+        //canvas.removeEventListener('mousemove', ev_canvas);
         canvas.removeEventListener('mouseup', ev_canvas);
         clearTempCanvas();
     };
 
     var resume_draw = function() {
+        var tool_radios = document.toolForm.toolRadios;
+        for (var i = 0; i < tool_radios.length; ++i)
+        {
+            tool_radios[i].disabled = false;
+	    if (tool_radios[i].checked == true)
+	    {
+		tool = new tools[tool_radios[i].value]();
+	    }
+        }
+
         document.getElementById('clear_button').disabled = false;
         canvas.addEventListener('mousedown', ev_canvas, false);
-        canvas.addEventListener('mousemove', ev_canvas, false);
+        //canvas.addEventListener('mousemove', ev_canvas, false);
         canvas.addEventListener('mouseup',   ev_canvas, false);
     };
 
@@ -147,6 +163,21 @@ var graphDraw = (function() {
 
     // This object holds the implementation of each drawing tool.
     var tools = {};
+
+    // The highlight tool, for use after done drawing
+    tools.highlight = function () {
+	this.mousemove = function (ev) {
+            for (var i = 0; i < edges.length; ++i)
+            {
+		if (onEdge(edges[i], ev._x, ev._y))
+                {
+                    drawEdge(edges[i].l, edges[i].r, 'yellow');
+		    highlightWeight(i);
+                    return;
+                }
+            }
+        };
+    };
 
     // The node tool.
     tools.node = function () {
@@ -457,7 +488,7 @@ var graphDraw = (function() {
 
     var onEdge = function(e, x, y)
     {
-	return (distToSegment({x: x, y:y}, lNodes[e.l], rNodes[e.r]) < node_radius)
+	return (distToSegment({x: x, y:y}, lNodes[e.l], rNodes[e.r]) < node_radius/4)
     };
 
     var canDrawNode = function(x, y)
@@ -487,7 +518,7 @@ var graphDraw = (function() {
 	}
 	return true;
     };
-    
+
     var drawNodes = function()
     {
 	for (var i = 0; i < lNodes.length; ++i)
@@ -591,7 +622,7 @@ var graphDraw = (function() {
 	context.strokeText(t, x, y);
 	context.stroke();
 	context.closePath();
-		
+
 	context.beginPath();
 	context.fillStyle = c2;
 	context.fillText(t, x, y);
@@ -620,8 +651,35 @@ var graphDraw = (function() {
 
     }
 
-    var drawWeights = function()
+    var highlightWeight = function(ind)
     {
+	loc = drawWeights(ind);
+	
+	context.textAlign='center'
+	context.font="50px Arial";
+	context.lineWidth = 25;
+
+	context.beginPath();
+	context.strokeStyle = 'white';
+	context.strokeText(edges[ind].w, loc.x, loc.y);
+	context.stroke();
+	context.closePath();
+
+	context.beginPath();
+	context.fillStyle = weightColor;
+	context.fillText(edges[ind].w, loc.x, loc.y);
+	context.fill();
+	context.closePath();
+    }
+
+    var drawWeights = function(targetWeight)
+    {
+	retX = -1;
+	retY = -1;
+	if (typeof targetWeight === "undefined")
+	{
+	    targetWeight = -1;
+	}
 	var intersections = [];
 	for (var i = 0; i < edges.length; ++i)
 	{
@@ -665,7 +723,13 @@ var graphDraw = (function() {
 		}
 	    }
 	    drawOutlinedText(edges[i].w, xLocation, yLocation, 7, 'white', weightColor);
+	    if (i == targetWeight)
+	    {
+		retX = xLocation;
+		retY = yLocation;
+	    }
 	}
+	return { 'x': retX, 'y': retY };
     };
 
     var edgeExists = function(in1, in2)
